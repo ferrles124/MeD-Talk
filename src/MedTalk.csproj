@@ -6,7 +6,7 @@
     <TargetFrameworks>net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Platforms>AnyCPU;x64</Platforms>
-    <NoWarn>$(NoWarn);NU1701;MSB3245;MSB3246</NoWarn>
+    <NoWarn>$(NoWarn);NU1701;MSB3245;MSB3246;CA1416</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="newtonsoft.json" Version="13.0.3" />
@@ -23,6 +23,10 @@
     </Reference>
     <Reference Include="StardewModdingAPI">
       <HintPath>$(HOME)/stardew/StardewModdingAPI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SMAPI.Toolkit.CoreInterfaces">
+      <HintPath>$(HOME)/stardew/SMAPI.Toolkit.CoreInterfaces.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="MonoGame.Framework">
