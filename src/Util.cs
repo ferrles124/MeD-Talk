@@ -2,7 +2,6 @@ using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework;
 
 namespace MedTalk
 {
@@ -17,7 +16,10 @@ namespace MedTalk
             foreach (var otherNpc in npcs)
             {
                 var npcLocation = otherNpc.Tile;
-                if (Vector2.Distance(speakerLocation, npcLocation) < 4.5f)
+                var dx = speakerLocation.X - npcLocation.X;
+                var dy = speakerLocation.Y - npcLocation.Y;
+                var distance = Math.Sqrt(dx * dx + dy * dy);
+                if (distance < 4.5)
                     nearbyNpcs.Add(otherNpc);
             }
             return nearbyNpcs;
