@@ -54,6 +54,9 @@ namespace MedTalk
 
         internal void AddConversation(NPC npc, string dialogue, bool isPlayerLine = false) { }
         internal void ClearContext() { }
+        internal void AddDialogueLine(NPC instance, List<StardewValley.DialogueLine> lines) { }
+        internal void AddEventLine(NPC instance, IEnumerable<NPC> actors, string festivalName, List<StardewValley.DialogueLine> lines) { }
+        internal void AddOverheardLine(NPC otherNpc, NPC instance, List<StardewValley.DialogueLine> lines) { }
 
         internal bool PatchNpc(NPC n, int probability = 4, bool retainResult = false)
         {
