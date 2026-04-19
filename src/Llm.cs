@@ -1,48 +1,87 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace MedTalk
 {
-    public abstract class Llm
+    internal abstract class Llm
     {
-        private static Llm _instance;
+        internal static Llm Instance { get; private set; }
 
-        public static void SetLlm(Type llmType, string modelName, string apiKey, string url, string promptFormat)
+        internal static void SetLlm(Type llmType, string url = "", string promptFormat = "", string apiKey = "", string modelName = null)
         {
-            _instance = (Llm)Activator.CreateInstance(llmType);
-            _instance.ModelName = modelName;
-            _instance.ApiKey = apiKey;
-            _instance.Url = url;
-            _instance.PromptFormat = promptFormat;
+            var constructor = llmType.GetConstructors()[0];
+            Instance = (Llm)Activator.CreateInstance(llmType, apiKey, modelName, url);
         }
 
-        public static Llm Instance => _instance;
-
-        public string ModelName { get; set; }
-        public string ApiKey { get; set; }
-        public string Url { get; set; }
-        public string PromptFormat { get; set; }
+        protected string _apiKey;
+        protected string _modelName;
+        protected string _url;
 
         public abstract Task<string> GenerateDialogue(string prompt);
     }
 
-    public class LlmGemini : Llm
+    internal class LlmGemini : Llm
     {
-        public override Task<string> GenerateDialogue(string prompt) => Task.FromResult("");
+        public LlmGemini(string apiKey, string modelName, string url)
+        {
+            _apiKey = apiKey;
+            _modelName = string.IsNullOrEmpty(modelName) ? "gemini-2.0-flash" : modelName;
+            _url = url;
+        }
+
+        public override async Task<string> GenerateDialogue(string prompt)
+        {
+            await Task.Delay(0);
+            return "...";
+        }
     }
 
-    public class LlmClaude : Llm
+    internal class LlmClaude : Llm
     {
-        public override Task<string> GenerateDialogue(string prompt) => Task.FromResult("");
+        public LlmClaude(string apiKey, string modelName, string url)
+        {
+            _apiKey = apiKey;
+            _modelName = string.IsNullOrEmpty(modelName) ? "claude-opus-4-5" : modelName;
+            _url = "https://api.anthropic.com/v1/messages";
+        }
+
+        public override async Task<string> GenerateDialogue(string prompt)
+        {
+            await Task.Delay(0);
+            return "...";
+        }
     }
 
-    public class LlmOpenAi : Llm
+    internal class LlmOpenAi : Llm
     {
-        public override Task<string> GenerateDialogue(string prompt) => Task.FromResult("");
+        public LlmOpenAi(string apiKey, string modelName, string url)
+        {
+            _apiKey = apiKey;
+            _modelName = string.IsNullOrEmpty(modelName) ? "gpt-4o" : modelName;
+            _url = "https://api.openai.com/v1/chat/completions";
+        }
+
+        public override async Task<string> GenerateDialogue(string prompt)
+        {
+            await Task.Delay(0);
+            return "...";
+        }
     }
 
-    public class LlmOAICompatible : Llm
+    internal class LlmOAICompatible : Llm
     {
-        public override Task<string> GenerateDialogue(string prompt) => Task.FromResult("");
+        public LlmOAICompatible(string apiKey, string modelName, string url)
+        {
+            _apiKey = apiKey;
+            _modelName = modelName;
+            _url = url;
+        }
+
+        public override async Task<string> GenerateDialogue(string prompt)
+        {
+            await Task.Delay(0);
+            return "...";
+        }
     }
 }
