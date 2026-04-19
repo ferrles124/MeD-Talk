@@ -1,7 +1,6 @@
 using HarmonyLib;
 using StardewValley;
 using System;
-using System.Linq;
 
 namespace MedTalk
 {
@@ -13,7 +12,8 @@ namespace MedTalk
             if (dialogue == null || dialogue.dialogues == null || dialogue.dialogues.Count == 0)
                 return true;
 
-            if (dialogue.dialogues.First().StartsWith("skip#"))
+            var first = dialogue.dialogues.Peek();
+            if (first != null && first.ToString().StartsWith("skip#"))
                 return false;
 
             return true;
