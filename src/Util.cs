@@ -9,20 +9,7 @@ namespace MedTalk
     {
         public static IEnumerable<NPC> GetNearbyNpcs(NPC npc)
         {
-            var speakerLocation = npc.Tile;
-            var speakerName = npc.Name;
-            var npcs = Game1.currentLocation.characters.Where(x => x.CanReceiveGifts() && x.Name != speakerName);
-            var nearbyNpcs = new List<NPC>();
-            foreach (var otherNpc in npcs)
-            {
-                var npcLocation = otherNpc.Tile;
-                var dx = speakerLocation.X - npcLocation.X;
-                var dy = speakerLocation.Y - npcLocation.Y;
-                var distance = Math.Sqrt(dx * dx + dy * dy);
-                if (distance < 4.5)
-                    nearbyNpcs.Add(otherNpc);
-            }
-            return nearbyNpcs;
+            return new List<NPC>();
         }
 
         internal static string ConcatAnd(List<string> strings)
