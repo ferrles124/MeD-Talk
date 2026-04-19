@@ -21,11 +21,10 @@ jobs:
     - name: Setup game folder
       run: |
         mkdir -p "$HOME/stardew"
-        
         curl -L "https://drive.google.com/uc?export=download&id=12tXWHUfUPeOtW-gaL2HepY_44SWTAjWN&confirm=t" -o "$HOME/stardew/Stardew Valley.dll"
         curl -L "https://drive.google.com/uc?export=download&id=1mdSKSSeWkdeQXtRJNp7944kM93jv-mIp&confirm=t" -o "$HOME/stardew/StardewValley.GameData.dll"
         curl -L "https://drive.google.com/uc?export=download&id=1-tx2TMjISZsa223YF2DvrJeRLID02-Su&confirm=t" -o "$HOME/stardew/StardewModdingAPI.dll"
-        
+        curl -L "https://drive.google.com/uc?export=download&id=135cctFGLCyySt058v06w7eWgQuHJabnn&confirm=t" -o "$HOME/stardew/SMAPI.Toolkit.CoreInterfaces.dll"
         ls -la "$HOME/stardew/"
 
     - name: Build MedTalk
