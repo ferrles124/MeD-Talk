@@ -116,4 +116,41 @@ namespace MedTalk
             }
         }
     }
+
+    internal class LlmGroq : Llm
+    {
+        public LlmGroq(string apiKey, string modelName, string url)
+        {
+            _apiKey = apiKey;
+            _modelName = string.IsNullOrEmpty(modelName) ? "llama-3.3-70b-versatile" : modelName;
+            _url = "https://api.groq.com/openai/v1/chat/completions";
+        }
+
+        public override async Task<string> GenerateDialogue(string prompt)
+        {
+            var inputString = JsonConvert.SerializeObject(new
+            {
+                model = _modelName,
+                messages = new[] { new { role = "user", content = prompt } },
+                max_tokens = 150
+            });
+
+            try
+            {
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                var request = new HttpRequestMessage(HttpMethod.Post, _url);
+                request.Headers.Add("Authorization", $"Bearer {_apiKey}");
+                request.Content = new StringContent(inputString, Encoding.UTF8, "application/json");
+                var response = await client.SendAsync(request);
+                var responseString = await response.Content.ReadAsStringAsync();
+                var responseJson = JObject.Parse(responseString);
+                return responseJson["choices"]?[0]?["message"]?["content"]?.ToString() ?? "...";
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.Message);
+                return "...";
+            }
+        }
+    }
 }
