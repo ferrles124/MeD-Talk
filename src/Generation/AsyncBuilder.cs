@@ -23,6 +23,9 @@ namespace MedTalk
         public bool AwaitingGeneration => _awaitingGeneration;
         public NPC SpeakingNpc => _speakingNpc;
 
+        private Dialogue _pendingDialogue = null;
+        private bool _dialogueReady = false;
+
         private AsyncBuilder()
         {
             ModEntry.SHelper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
@@ -34,6 +37,21 @@ namespace MedTalk
             {
                 _awaitingGeneration = false;
                 _ = PerformGeneration();
+            }
+
+            if (_dialogueReady && _pendingDialogue != null)
+            {
+                _dialogueReady = false;
+                var dialogue = _pendingDialogue;
+                _pendingDialogue = null;
+                try
+                {
+                    Game1.drawDialogue(dialogue.speaker);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error showing dialogue: {ex.Message}");
+                }
             }
         }
 
@@ -58,14 +76,16 @@ namespace MedTalk
                         break;
                 }
 
-                if (newDialogue != null)
+                if (newDialogue != null && npc != null)
                 {
-                    Game1.DrawDialogue(newDialogue);
+                    npc.setNewDialogue(newDialogue.dialogues[0].Text, true, false);
+                    _pendingDialogue = new Dialogue(npc, "medtalk", newDialogue.dialogues[0].Text);
+                    _dialogueReady = true;
                 }
             }
             catch (Exception ex)
             {
-                ModEntry.SMonitor?.Log($"Error: {ex.Message}", StardewModdingAPI.LogLevel.Error);
+                Log.Error($"Error generating dialogue: {ex.Message}");
             }
             finally
             {
