@@ -14,26 +14,6 @@ namespace MedTalk
         }
     }
 
-    [HarmonyPatch(typeof(NPC), nameof(NPC.tryToRetrieveDialogue))]
-    public class NPC_TryToRetrieveDialogue_Patch
-    {
-        public static bool Prefix(NPC __instance, ref Dialogue __result, string preface, int heartLevel, string appendToEnd)
-        {
-            if (!DialogueBuilder.Instance.PatchNpc(__instance)) return true;
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(NPC), nameof(NPC.tryToGetMarriageSpecificDialogue))]
-    public class NPC_TryToGetMarriageSpecificDialogue_Patch
-    {
-        public static bool Prefix(NPC __instance, ref Dialogue __result, string key)
-        {
-            if (!DialogueBuilder.Instance.PatchNpc(__instance)) return true;
-            return true;
-        }
-    }
-
     [HarmonyPatch(typeof(NPC), nameof(NPC.GetGiftReaction))]
     public class NPC_GetGiftReaction_Patch
     {
@@ -43,16 +23,6 @@ namespace MedTalk
             AsyncBuilder.Instance.RequestNpcGiftResponse(__instance, item, 0);
             __result = "";
             return false;
-        }
-    }
-
-    [HarmonyPatch(typeof(GameLocation), nameof(GameLocation.GetLocationOverrideDialogue))]
-    public class GameLocation_GetLocationOverrideDialogue_Patch
-    {
-        public static bool Prefix(GameLocation __instance, NPC n, ref Dialogue __result)
-        {
-            if (!DialogueBuilder.Instance.PatchNpc(n)) return true;
-            return true;
         }
     }
 }
