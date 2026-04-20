@@ -1,0 +1,9 @@
+{
+  "EnableMod": true,
+  "Provider": "Anthropic",
+  "ModelName": "claude-opus-4-5",
+  "ApiKey": "",
+  "ServerAddress": "",
+  "PromptFormat": "",
+  "Debug": false
+}
