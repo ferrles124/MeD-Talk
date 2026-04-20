@@ -1,7 +1,5 @@
 using HarmonyLib;
 using StardewValley;
-using System;
-using System.Collections.Generic;
 
 namespace MedTalk
 {
@@ -19,7 +17,7 @@ namespace MedTalk
     [HarmonyPatch(typeof(NPC), nameof(NPC.tryToRetrieveDialogue))]
     public class NPC_TryToRetrieveDialogue_Patch
     {
-        public static bool Prefix(NPC __instance, ref Dialogue __result, string key)
+        public static bool Prefix(NPC __instance, ref Dialogue __result, string preface, int heartLevel, string appendToEnd)
         {
             if (!DialogueBuilder.Instance.PatchNpc(__instance)) return true;
             return true;
