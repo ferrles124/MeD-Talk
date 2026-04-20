@@ -25,6 +25,7 @@ namespace MedTalk
                         {"Google", typeof(LlmGemini)},
                         {"Anthropic", typeof(LlmClaude)},
                         {"OpenAI", typeof(LlmOpenAi)},
+                        {"Groq", typeof(LlmGroq)},
                         {"OpenAiCompatible", typeof(LlmOAICompatible)}
                     };
                 }
