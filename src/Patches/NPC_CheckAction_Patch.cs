@@ -8,18 +8,23 @@ namespace MedTalk
     {
         public static bool Prefix(ref NPC __instance, ref bool __result, Farmer who, GameLocation l)
         {
-            if (__instance.IsInvisible ||
-                !who.CanMove ||
-                !DialogueBuilder.Instance.PatchNpc(__instance))
+            Log.Info($"NPC_CheckAction_Patch called for {__instance.Name}");
+
+            if (!who.CanMove)
             {
+                Log.Info("Farmer cannot move, skipping");
                 return true;
             }
 
-            DialogueBuilder.Instance.ClearContext();
-            var character = DialogueBuilder.Instance.GetCharacter(__instance);
-            var prompt = $"What do you want to say to {__instance.displayName}?";
+            if (!DialogueBuilder.Instance.PatchNpc(__instance))
+            {
+                Log.Info("PatchNpc returned false, skipping");
+                return true;
+            }
 
-            TextInputManager.RequestTextInput(prompt, __instance);
+            Log.Info($"Requesting dialogue for {__instance.Name}");
+            DialogueBuilder.Instance.ClearContext();
+            TextInputManager.RequestTextInput("", __instance);
 
             __result = false;
             return false;
