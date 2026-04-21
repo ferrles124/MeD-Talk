@@ -11,20 +11,12 @@ namespace MedTalk
         private static AsyncBuilder _instance = new AsyncBuilder();
         public static AsyncBuilder Instance => _instance;
 
-        private bool _awaitingGeneration = false;
-        private GenerationType _awaitedType = GenerationType.None;
-        private NPC _speakingNpc = null;
-        private string _currentDialogueKey = "";
-        private string _originalLine = null;
-        private List<ConversationElement> _currentConversation = null;
-        private StardewValley.Object _currentGift = null;
-        private int _currentTaste = 0;
-
-        public bool AwaitingGeneration => _awaitingGeneration;
+        public bool AwaitingGeneration { get; private set; } = false;
         public NPC SpeakingNpc => _speakingNpc;
 
-        private Dialogue _pendingDialogue = null;
-        private bool _dialogueReady = false;
+        private NPC _speakingNpc = null;
+        private Task<string> _pendingTask = null;
+        private bool _taskStarted = false;
 
         private AsyncBuilder()
         {
@@ -33,112 +25,74 @@ namespace MedTalk
 
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (_awaitingGeneration && Game1.activeClickableMenu == null)
+            if (!_taskStarted || _pendingTask == null) return;
+
+            if (!_pendingTask.IsCompleted) return;
+
+            _taskStarted = false;
+            AwaitingGeneration = false;
+
+            if (_pendingTask.IsFaulted)
             {
-                _awaitingGeneration = false;
-                _ = PerformGeneration();
+                Log.Error($"Task failed: {_pendingTask.Exception?.Message}");
+                _pendingTask = null;
+                _speakingNpc = null;
+                return;
             }
 
-            if (_dialogueReady && _pendingDialogue != null)
-            {
-                _dialogueReady = false;
-                var dialogue = _pendingDialogue;
-                _pendingDialogue = null;
-                try
-                {
-                    Game1.drawDialogue(dialogue.speaker);
-                }
-                catch (Exception ex)
-                {
-                    Log.Error($"Error showing dialogue: {ex.Message}");
-                }
-            }
-        }
+            var text = _pendingTask.Result;
+            _pendingTask = null;
 
-        private async Task PerformGeneration()
-        {
-            try
+            if (string.IsNullOrEmpty(text) || text == "...") 
             {
-            Log.Info($"PerformGeneration started for type: {_awaitedType}, NPC: {_speakingNpc?.Name}");
-                
-                var npc = _speakingNpc;
-                Dialogue newDialogue = null;
-
-                switch (_awaitedType)
-                {
-                    case GenerationType.Basic:
-                        newDialogue = await DialogueBuilder.Instance.Generate(npc, _currentDialogueKey, _originalLine);
-                        break;
-                    case GenerationType.Conversation:
-                        var response = await DialogueBuilder.Instance.GenerateResponse(npc, _currentConversation, true);
-                        newDialogue = new Dialogue(npc, _currentDialogueKey, response);
-                        break;
-                    case GenerationType.Gift:
-                        newDialogue = await DialogueBuilder.Instance.GenerateGift(npc, _currentGift, _currentTaste);
-                        break;
-                }
-
-                if (newDialogue != null && npc != null)
-                {
-                    npc.setNewDialogue(newDialogue.dialogues[0].Text, true, false);
-                    _pendingDialogue = new Dialogue(npc, "medtalk", newDialogue.dialogues[0].Text);
-                    _dialogueReady = true;
-                }
+                Log.Info("Empty response received");
+                _speakingNpc = null;
+                return;
             }
-            catch (Exception ex)
-            {
-                Log.Error($"Error generating dialogue: {ex.Message}");
-            }
-            finally
-            {
-                Reset();
-            }
-        }
 
-        private void Reset()
-        {
-            _awaitingGeneration = false;
+            Log.Info($"Got response: {text}");
+
+            var npc = _speakingNpc;
             _speakingNpc = null;
-            _currentDialogueKey = "";
-            _originalLine = null;
-            _currentConversation = null;
-            _currentGift = null;
-            _currentTaste = 0;
-            _awaitedType = GenerationType.None;
+
+            if (npc == null) return;
+
+            npc.setNewDialogue(text, true, false);
+            Game1.drawDialogue(npc);
         }
 
         internal void RequestNpcBasic(NPC npc, string key, string original)
         {
-            if (_awaitingGeneration) return;
+            if (AwaitingGeneration) return;
+
             _speakingNpc = npc;
-            _currentDialogueKey = key;
-            _originalLine = original;
-            _awaitedType = GenerationType.Basic;
-            _awaitingGeneration = true;
+            AwaitingGeneration = true;
+            _taskStarted = true;
+
+            var character = DialogueBuilder.Instance.GetCharacter(npc);
+            _pendingTask = character.CreateDialogue(original);
+
+            Log.Info($"Task started for {npc.Name}");
         }
 
         internal void RequestNpcResponse(NPC npc, List<ConversationElement> conversation)
         {
-            if (_awaitingGeneration) return;
+            if (AwaitingGeneration) return;
             _speakingNpc = npc;
-            _currentConversation = conversation;
-            _awaitedType = GenerationType.Conversation;
-            _awaitingGeneration = true;
+            AwaitingGeneration = true;
+            _taskStarted = true;
+            var character = DialogueBuilder.Instance.GetCharacter(npc);
+            _pendingTask = character.CreateResponse(conversation);
         }
 
         internal void RequestNpcGiftResponse(NPC npc, StardewValley.Object gift, int taste)
         {
-            if (_awaitingGeneration) return;
+            if (AwaitingGeneration) return;
             _speakingNpc = npc;
-            _currentGift = gift;
-            _currentTaste = taste;
-            _awaitedType = GenerationType.Gift;
-            _awaitingGeneration = true;
+            AwaitingGeneration = true;
+            _taskStarted = true;
+            var character = DialogueBuilder.Instance.GetCharacter(npc);
+            _pendingTask = character.CreateGiftResponse(gift, taste);
         }
-    }
-
-    internal enum GenerationType
-    {
-        None, Basic, Conversation, Gift
     }
 }
