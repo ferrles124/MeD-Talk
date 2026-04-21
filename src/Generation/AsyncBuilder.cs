@@ -59,6 +59,8 @@ namespace MedTalk
         {
             try
             {
+            Log.Info($"PerformGeneration started for type: {_awaitedType}, NPC: {_speakingNpc?.Name}");
+                
                 var npc = _speakingNpc;
                 Dialogue newDialogue = null;
 
