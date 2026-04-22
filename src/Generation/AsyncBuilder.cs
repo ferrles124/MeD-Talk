@@ -51,7 +51,7 @@ namespace MedTalk
                         break;
                     case GenerationType.Conversation:
                         var response = await DialogueBuilder.Instance.GenerateResponse(npc, _currentConversation, true);
-                        newDialogue = new Dialogue(response ?? "...", npc);
+                        newDialogue = new Dialogue(response ?? "...");
                         break;
                     case GenerationType.Gift:
                         newDialogue = await DialogueBuilder.Instance.GenerateGift(npc, _currentGift, _currentTaste);
@@ -68,7 +68,7 @@ namespace MedTalk
                 ModEntry.SMonitor?.Log($"AsyncBuilder error: {ex.Message}", StardewModdingAPI.LogLevel.Error);
                 if (_speakingNpc != null)
                 {
-                    var fallbackDialogue = new Dialogue("...", _speakingNpc);
+                    var fallbackDialogue = new Dialogue("...");
                     Game1.drawDialogue(fallbackDialogue);
                 }
             }
