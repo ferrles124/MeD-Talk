@@ -93,67 +93,37 @@ namespace MedTalk
         }
 
         public override async Task<string> GenerateDialogue(string prompt)
-        {
-            var inputString = JsonConvert.SerializeObject(new
-            {
-                model = _modelName,
-                messages = new[] { new { role = "user", content = prompt } }
-            });
-
-            try
-            {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-                var request = new HttpRequestMessage(HttpMethod.Post, _url);
-                if (!string.IsNullOrEmpty(_apiKey))
-                    request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-                request.Content = new StringContent(inputString, Encoding.UTF8, "application/json");
-                var response = await client.SendAsync(request);
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseJson = JObject.Parse(responseString);
-                return responseJson["choices"]?[0]?["message"]?["content"]?.ToString() ?? "...";
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.Message);
-                return "...";
-            }
-        }
-    }
-
-    internal class LlmGroq : Llm
+{
+    Log.Info($"LlmGroq.GenerateDialogue called, key length: {_apiKey?.Length ?? 0}");
+    var inputString = System.Text.Json.JsonSerializer.Serialize(new
     {
-        public LlmGroq(string apiKey, string modelName, string url)
-        {
-            _apiKey = apiKey;
-            _modelName = string.IsNullOrEmpty(modelName) ? "llama-3.3-70b-versatile" : modelName;
-            _url = "https://api.groq.com/openai/v1/chat/completions";
-        }
+        model = _modelName,
+        messages = new[] { new { role = "user", content = prompt } },
+        max_tokens = 150
+    });
 
-        public override async Task<string> GenerateDialogue(string prompt)
-        {
-            var inputString = JsonConvert.SerializeObject(new
-            {
-                model = _modelName,
-                messages = new[] { new { role = "user", content = prompt } },
-                max_tokens = 150
-            });
-
-            try
-            {
-                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-                var request = new HttpRequestMessage(HttpMethod.Post, _url);
-                request.Headers.Add("Authorization", $"Bearer {_apiKey}");
-                request.Content = new StringContent(inputString, Encoding.UTF8, "application/json");
-                var response = await client.SendAsync(request);
-                var responseString = await response.Content.ReadAsStringAsync();
-                var responseJson = JObject.Parse(responseString);
-                return responseJson["choices"]?[0]?["message"]?["content"]?.ToString() ?? "...";
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.Message);
-                return "...";
-            }
-        }
+    try
+    {
+        using var client = new System.Net.Http.HttpClient();
+        client.Timeout = TimeSpan.FromSeconds(20);
+        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+        
+        var content = new System.Net.Http.StringContent(inputString, System.Text.Encoding.UTF8, "application/json");
+        Log.Info("Sending request to Groq...");
+        var response = await client.PostAsync(_url, content);
+        var responseString = await response.Content.ReadAsStringAsync();
+        Log.Info($"Groq status: {response.StatusCode}");
+        Log.Info($"Groq response: {responseString.Substring(0, Math.Min(300, responseString.Length))}");
+        
+        var responseJson = Newtonsoft.Json.Linq.JObject.Parse(responseString);
+        var text = responseJson["choices"]?[0]?["message"]?["content"]?.ToString();
+        return string.IsNullOrEmpty(text) ? null : text;
+    }
+    catch (Exception ex)
+    {
+        Log.Error($"LlmGroq error: {ex.GetType().Name}: {ex.Message}");
+        if (ex.InnerException != null)
+            Log.Error($"Inner: {ex.InnerException.Message}");
+        return null;
     }
 }
