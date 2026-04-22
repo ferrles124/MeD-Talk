@@ -60,7 +60,7 @@ namespace MedTalk
 
                 if (newDialogue != null)
                 {
-                    Game1.DrawDialogue(newDialogue);
+                    Game1.drawDialogue(newDialogue);
                 }
             }
             catch (Exception ex)
@@ -69,7 +69,7 @@ namespace MedTalk
                 if (_speakingNpc != null)
                 {
                     var fallbackDialogue = new Dialogue("...", _speakingNpc);
-                    Game1.DrawDialogue(fallbackDialogue);
+                    Game1.drawDialogue(fallbackDialogue);
                 }
             }
             finally
