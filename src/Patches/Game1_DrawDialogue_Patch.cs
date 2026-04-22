@@ -4,7 +4,7 @@ using System;
 
 namespace MedTalk
 {
-    [HarmonyPatch(typeof(Game1), nameof(Game1.drawDialogue), new Type[] { typeof(Dialogue) })]
+    [HarmonyPatch(typeof(Game1), "drawDialogue", new Type[] { typeof(Dialogue) })]
     public class Game1_DrawDialogue_Patch
     {
         public static bool Prefix(Dialogue dialogue)
