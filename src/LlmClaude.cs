@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 
 namespace MedTalk
 {
@@ -51,9 +51,9 @@ namespace MedTalk
                     
                     var responseJson = JObject.Parse(responseString);
                     var content = responseJson["content"] as JArray;
-                    if (content != null && content.HasValues)
+                    if (content != null && content.Count > 0)
                     {
-                        var text = content.FirstOrDefault()?["text"]?.ToString();
+                        var text = content[0]?["text"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(text))
                             return text;
                     }
