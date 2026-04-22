@@ -25,6 +25,7 @@ namespace MedTalk
                         {"OpenAI", typeof(LlmOpenAi)},
                         {"OpenAiCompatible", typeof(LlmOAICompatible)},
                         {"Groq", typeof(LlmGroq)}
+                        {"HuggingFace", typeof(LlmHuggingFace)},
                     };
                 }
                 return _llmMap;
