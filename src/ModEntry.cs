@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using HarmonyLib;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -25,8 +23,8 @@ namespace MedTalk
                         {"Google", typeof(LlmGemini)},
                         {"Anthropic", typeof(LlmClaude)},
                         {"OpenAI", typeof(LlmOpenAi)},
-                        {"Groq", typeof(LlmGroq)},
-                        {"OpenAiCompatible", typeof(LlmOAICompatible)}
+                        {"OpenAiCompatible", typeof(LlmOAICompatible)},
+                        {"Groq", typeof(LlmGroq)}
                     };
                 }
                 return _llmMap;
@@ -40,26 +38,60 @@ namespace MedTalk
         {
             SHelper = helper;
             SMonitor = Monitor;
-            Config = Helper.ReadConfig<ModConfig>();
 
-            if (!Config.EnableMod) return;
-
-            Log.Initialize(Monitor);
-
-            if (!LlmMap.TryGetValue(Config.Provider, out var llmType))
+            try
             {
-                Log.Error($"Invalid LLM type: {Config.Provider}");
+                Config = Helper.ReadConfig<ModConfig>();
+            }
+            catch
+            {
+                Config = new ModConfig();
+            }
+
+            if (!Config.EnableMod)
+            {
+                Monitor.Log("MedTalk disabled in config.", LogLevel.Info);
                 return;
             }
 
-            Llm.SetLlm(llmType, modelName: Config.ModelName, apiKey: Config.ApiKey, url: Config.ServerAddress, promptFormat: Config.PromptFormat);
+            Log.Initialize(Monitor);
+            Log.Info("MedTalk starting...");
+
+            if (!LlmMap.TryGetValue(Config.Provider, out var llmType))
+            {
+                Log.Error($"Invalid provider: {Config.Provider}. Use: Google, Anthropic, OpenAI, Groq");
+                return;
+            }
+
+            Log.Info($"Using provider: {Config.Provider}, model: {Config.ModelName}");
+
+            try
+            {
+                Llm.SetLlm(llmType, apiKey: Config.ApiKey, modelName: Config.ModelName, url: Config.ServerAddress);
+                Log.Info($"LLM initialized: {Llm.Instance?.GetType().Name}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to initialize LLM: {ex.Message}");
+                return;
+            }
 
             DialogueBuilder.Instance.Config = Config;
+            TextInputManager.Initialize();
 
-            var harmony = new Harmony(ModManifest.UniqueID);
-            harmony.PatchAll();
+            try
+            {
+                var harmony = new Harmony(ModManifest.UniqueID);
+                harmony.PatchAll();
+                Log.Info("Harmony patches applied");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Harmony patch failed: {ex.Message}");
+                return;
+            }
 
-            Log.Debug($"[{DateTime.Now}] MedTalk loaded");
+            Log.Info("MedTalk loaded successfully!");
         }
     }
 }
