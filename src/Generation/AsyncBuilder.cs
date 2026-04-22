@@ -26,44 +26,63 @@ namespace MedTalk
         private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             if (!_taskStarted || _pendingTask == null) return;
-
             if (!_pendingTask.IsCompleted) return;
 
             _taskStarted = false;
             AwaitingGeneration = false;
 
+            var npc = _speakingNpc;
+            _speakingNpc = null;
+
             if (_pendingTask.IsFaulted)
             {
-                Log.Error($"Task failed: {_pendingTask.Exception?.Message}");
+                Log.Error($"Task faulted: {_pendingTask.Exception?.GetBaseException().Message}");
                 _pendingTask = null;
-                _speakingNpc = null;
                 return;
             }
 
             var text = _pendingTask.Result;
             _pendingTask = null;
 
-            if (string.IsNullOrEmpty(text) || text == "...") 
+            Log.Info($"Response received: '{text}'");
+
+            if (string.IsNullOrWhiteSpace(text) || text == "...")
             {
-                Log.Info("Empty response received");
-                _speakingNpc = null;
+                Log.Info("Empty or default response, skipping");
                 return;
             }
 
-            Log.Info($"Got response: {text}");
+            if (npc == null)
+            {
+                Log.Info("NPC is null, skipping");
+                return;
+            }
 
-            var npc = _speakingNpc;
-            _speakingNpc = null;
-
-            if (npc == null) return;
-
-            npc.setNewDialogue(text, true, false);
-            Game1.drawDialogue(npc);
+            try
+            {
+                npc.setNewDialogue(text, true, false);
+                Game1.drawDialogue(npc);
+                Log.Info($"Dialogue shown for {npc.Name}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error showing dialogue: {ex.Message}");
+            }
         }
 
         internal void RequestNpcBasic(NPC npc, string key, string original)
         {
-            if (AwaitingGeneration) return;
+            if (AwaitingGeneration)
+            {
+                Log.Info("Already awaiting, skipping");
+                return;
+            }
+
+            if (Llm.Instance == null)
+            {
+                Log.Error("Llm.Instance is null! Check config.");
+                return;
+            }
 
             _speakingNpc = npc;
             AwaitingGeneration = true;
@@ -71,13 +90,13 @@ namespace MedTalk
 
             var character = DialogueBuilder.Instance.GetCharacter(npc);
             _pendingTask = character.CreateDialogue(original);
-
             Log.Info($"Task started for {npc.Name}");
         }
 
         internal void RequestNpcResponse(NPC npc, List<ConversationElement> conversation)
         {
             if (AwaitingGeneration) return;
+            if (Llm.Instance == null) { Log.Error("Llm.Instance is null!"); return; }
             _speakingNpc = npc;
             AwaitingGeneration = true;
             _taskStarted = true;
@@ -88,6 +107,7 @@ namespace MedTalk
         internal void RequestNpcGiftResponse(NPC npc, StardewValley.Object gift, int taste)
         {
             if (AwaitingGeneration) return;
+            if (Llm.Instance == null) { Log.Error("Llm.Instance is null!"); return; }
             _speakingNpc = npc;
             AwaitingGeneration = true;
             _taskStarted = true;
