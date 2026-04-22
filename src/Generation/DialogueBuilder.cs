@@ -35,7 +35,7 @@ namespace MedTalk
         {
             var character = GetCharacter(instance);
             var theLine = await character.CreateDialogue(originalLine);
-            return new Dialogue(instance, dialogueKey, theLine ?? "...");
+            return new Dialogue(theLine ?? "...", instance);
         }
 
         internal async Task<string> GenerateResponse(NPC instance, List<ConversationElement> conversation, bool dontSkipNext = false)
@@ -49,7 +49,7 @@ namespace MedTalk
         {
             var character = GetCharacter(instance);
             var theLine = await character.CreateGiftResponse(gift, taste);
-            return new Dialogue(instance, $"Accept_{gift.Name}", theLine ?? "...");
+            return new Dialogue(theLine ?? "...", instance);
         }
 
         internal void AddConversation(NPC npc, string dialogue, bool isPlayerLine = false) { }
@@ -61,6 +61,7 @@ namespace MedTalk
         internal bool PatchNpc(NPC n, int probability = 4, bool retainResult = false)
         {
             if (LlmDisabled || Config == null || !Config.EnableMod) return false;
+            if (Config.DisabledCharactersList.Contains(n.Name)) return false;
             if (probability < 4 && _random.Next(4) >= probability) return false;
             return true;
         }
