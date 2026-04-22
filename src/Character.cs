@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using StardewValley;
 
@@ -20,26 +21,48 @@ namespace MedTalk
         {
             if (Llm.Instance == null) return originalLine;
             var prompt = BuildPrompt(originalLine);
-            return await Llm.Instance.GenerateDialogue(prompt);
+            var result = await Llm.Instance.GenerateDialogue(prompt);
+            return string.IsNullOrEmpty(result) ? "..." : result;
         }
 
         public async Task<string> CreateResponse(List<ConversationElement> conversation)
         {
             if (Llm.Instance == null) return "...";
             var prompt = BuildConversationPrompt(conversation);
-            return await Llm.Instance.GenerateDialogue(prompt);
+            var result = await Llm.Instance.GenerateDialogue(prompt);
+            return string.IsNullOrEmpty(result) ? "..." : result;
         }
 
         public async Task<string> CreateGiftResponse(StardewValley.Object gift, int taste)
         {
             if (Llm.Instance == null) return "...";
-            var prompt = $"You are {Name} from Stardew Valley. React to receiving {gift.DisplayName} as a gift. Keep it short and in character.";
-            return await Llm.Instance.GenerateDialogue(prompt);
+            var tasteText = taste switch
+            {
+                0 => "hates",
+                1 => "dislikes",
+                2 => "is neutral about",
+                4 => "likes",
+                8 => "loves",
+                _ => "reacts to"
+            };
+            var prompt = $"You are {Name} from Stardew Valley. You {tasteText} receiving {gift.DisplayName} as a gift. Respond in character with 1-2 sentences.";
+            var result = await Llm.Instance.GenerateDialogue(prompt);
+            return string.IsNullOrEmpty(result) ? "..." : result;
         }
 
         private string BuildPrompt(string context)
         {
-            var sb = new System.Text.StringBuilder();
+            var config = DialogueBuilder.Instance.Config;
+            if (!string.IsNullOrEmpty(config.PromptFormat))
+            {
+                try
+                {
+                    return string.Format(config.PromptFormat, Name, context);
+                }
+                catch { }
+            }
+            
+            var sb = new StringBuilder();
             sb.AppendLine($"You are {Name} from Stardew Valley.");
             sb.AppendLine("Respond naturally and in character. Keep your response short (1-2 sentences).");
             if (!string.IsNullOrEmpty(context))
@@ -50,7 +73,18 @@ namespace MedTalk
 
         private string BuildConversationPrompt(List<ConversationElement> conversation)
         {
-            var sb = new System.Text.StringBuilder();
+            var config = DialogueBuilder.Instance.Config;
+            if (!string.IsNullOrEmpty(config.PromptFormat))
+            {
+                try
+                {
+                    var conversationText = string.Join("\n", conversation.ConvertAll(e => $"{(e.IsPlayerLine ? "Farmer" : Name)}: {e.Text}"));
+                    return string.Format(config.PromptFormat, Name, conversationText);
+                }
+                catch { }
+            }
+            
+            var sb = new StringBuilder();
             sb.AppendLine($"You are {Name} from Stardew Valley.");
             sb.AppendLine("Respond naturally and in character. Keep your response short (1-2 sentences).");
             sb.AppendLine("Conversation so far:");
