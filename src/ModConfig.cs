@@ -10,7 +10,7 @@ namespace MedTalk
         public string PromptFormat { get; set; } = "";
         public bool Debug { get; set; } = false;
         public bool SuppressConnectionCheck { get; set; } = true;
-        public int QueryTimeout { get; set; } = 30;
+        public int QueryTimeout { get; set; } = 20;
         public System.Collections.Generic.List<string> DisabledCharactersList { get; set; } = new System.Collections.Generic.List<string>();
     }
 }
