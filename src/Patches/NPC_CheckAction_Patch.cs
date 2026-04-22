@@ -17,8 +17,9 @@ namespace MedTalk
 
             DialogueBuilder.Instance.ClearContext();
             var character = DialogueBuilder.Instance.GetCharacter(__instance);
+            
+            // Mobil: direkt AI tetikleme
             var prompt = $"What do you want to say to {__instance.displayName}?";
-
             TextInputManager.RequestTextInput(prompt, __instance);
 
             __result = false;
