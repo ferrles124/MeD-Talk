@@ -35,7 +35,7 @@ namespace MedTalk
         {
             var character = GetCharacter(instance);
             var theLine = await character.CreateDialogue(originalLine);
-            return new Dialogue(theLine ?? "...", instance);
+            return new Dialogue(theLine ?? "...");
         }
 
         internal async Task<string> GenerateResponse(NPC instance, List<ConversationElement> conversation, bool dontSkipNext = false)
