@@ -57,7 +57,7 @@ namespace MedTalk
             Log.Info($"LLM set: {Llm.Instance?.GetType().Name}");
 
             DialogueBuilder.Instance.Config = Config;
-            TextInputManager.Initialize();
+            TextInputManager.Initialize(helper);
 
             var _ = AsyncBuilder.Instance;
 
