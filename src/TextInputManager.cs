@@ -12,22 +12,10 @@ namespace MedTalk
             _helper = helper;
         }
         
+        // Mobil için: doğrudan AI yanıtı başlat
         public static void RequestTextInput(string prompt, NPC npc)
         {
-            // Mobil için: doğrudan AI yanıtı başlat
-            // Not: PC'de oynayanlar için metin girişi istenebilir,
-            // ancak bu mod mobil öncelikli olduğu için direkt AI çağrılıyor.
-            AsyncBuilder.Instance.RequestNpcBasic(npc, "touch_input", prompt);
-        }
-        
-        // PC kullanıcıları için alternatif (isteğe bağlı)
-        public static void RequestTextInputPC(string prompt, NPC npc)
-        {
-            _helper.Input.ShowTextInput(prompt, (success, text) =>
-            {
-                if (success && !string.IsNullOrEmpty(text))
-                    AsyncBuilder.Instance.RequestNpcBasic(npc, "pc_input", text);
-            });
+            AsyncBuilder.Instance.RequestNpcBasic(npc, "mobile_input", prompt);
         }
     }
 }
