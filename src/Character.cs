@@ -18,12 +18,26 @@ namespace MedTalk
         }
 
         public async Task<string> CreateDialogue(string originalLine)
-        {
-            if (Llm.Instance == null) return originalLine;
-            var prompt = BuildContextPrompt();
-            return await Llm.Instance.GenerateDialogue(prompt);
+{
+    Log.Info($"CreateDialogue: Llm={Llm.Instance?.GetType().Name ?? "NULL"}");
+    if (Llm.Instance == null)
+    {
+        Log.Error("Llm.Instance is null in CreateDialogue!");
+        return null;
+    }
+    var prompt = BuildContextPrompt();
+    try
+    {
+        var result = await Llm.Instance.GenerateDialogue(prompt);
+        Log.Info($"CreateDialogue result: '{result}'");
+        return result;
+    }
+    catch (Exception ex)
+    {
+        Log.Error($"CreateDialogue exception: {ex.Message}");
+        return null;
+    }
         }
-
         public async Task<string> CreateResponse(List<ConversationElement> conversation)
         {
             if (Llm.Instance == null) return "...";
