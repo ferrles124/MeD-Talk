@@ -31,11 +31,11 @@ namespace MedTalk
             return _characters[name];
         }
 
-        internal async Task<Dialogue> Generate(NPC instance, string dialogueKey, string originalLine = "")
+        internal async Task<MedTalkDialogue> Generate(NPC instance, string dialogueKey, string originalLine = "")
         {
             var character = GetCharacter(instance);
             var theLine = await character.CreateDialogue(originalLine);
-            return new Dialogue(theLine ?? "...");
+            return new MedTalkDialogue(theLine ?? "...", instance);
         }
 
         internal async Task<string> GenerateResponse(NPC instance, List<ConversationElement> conversation, bool dontSkipNext = false)
@@ -45,11 +45,11 @@ namespace MedTalk
             return theLine ?? "...";
         }
 
-        internal async Task<Dialogue> GenerateGift(NPC instance, StardewValley.Object gift, int taste)
+        internal async Task<MedTalkDialogue> GenerateGift(NPC instance, StardewValley.Object gift, int taste)
         {
             var character = GetCharacter(instance);
             var theLine = await character.CreateGiftResponse(gift, taste);
-            return new Dialogue(theLine ?? "...", instance);
+            return new MedTalkDialogue(theLine ?? "...", instance);
         }
 
         internal void AddConversation(NPC npc, string dialogue, bool isPlayerLine = false) { }
