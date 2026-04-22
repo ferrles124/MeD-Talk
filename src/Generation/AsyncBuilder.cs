@@ -1,69 +1,124 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using StardewModdingAPI.Events;
 using StardewValley;
 
 namespace MedTalk
 {
-    internal class DialogueBuilder
+    public class AsyncBuilder
     {
-        public static DialogueBuilder Instance => _instance ??= new DialogueBuilder();
-        private static DialogueBuilder _instance;
+        private static AsyncBuilder _instance = new AsyncBuilder();
+        public static AsyncBuilder Instance => _instance;
 
-        public ModConfig Config { get; internal set; }
-        public bool LlmDisabled { get; set; } = false;
+        private bool _awaitingGeneration = false;
+        private GenerationType _awaitedType = GenerationType.None;
+        private NPC _speakingNpc = null;
+        private string _currentDialogueKey = "";
+        private string _originalLine = null;
+        private List<ConversationElement> _currentConversation = null;
+        private StardewValley.Object _currentGift = null;
+        private int _currentTaste = 0;
 
-        private Dictionary<string, Character> _characters = new();
-        private Random _random = new();
+        public bool AwaitingGeneration => _awaitingGeneration;
+        public NPC SpeakingNpc => _speakingNpc;
 
-        public Character GetCharacter(NPC instance)
+        private AsyncBuilder()
         {
-            if (instance == null) return null;
-            if (!_characters.ContainsKey(instance.Name))
-                _characters[instance.Name] = new Character(instance.Name, instance);
-            return _characters[instance.Name];
+            ModEntry.SHelper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
         }
 
-        public Character GetCharacterByName(string name)
+        private void OnUpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(name) || !_characters.ContainsKey(name))
-                return null;
-            return _characters[name];
+            if (_awaitingGeneration && Game1.activeClickableMenu == null)
+            {
+                _awaitingGeneration = false;
+                _ = PerformGeneration();
+            }
         }
 
-        internal async Task<Dialogue> Generate(NPC instance, string dialogueKey, string originalLine = "")
+        private async Task PerformGeneration()
         {
-            var character = GetCharacter(instance);
-            var theLine = await character.CreateDialogue(originalLine);
-            return new Dialogue(theLine ?? "...", instance);
+            try
+            {
+                var npc = _speakingNpc;
+                Dialogue newDialogue = null;
+
+                switch (_awaitedType)
+                {
+                    case GenerationType.Basic:
+                        newDialogue = await DialogueBuilder.Instance.Generate(npc, _currentDialogueKey, _originalLine);
+                        break;
+                    case GenerationType.Conversation:
+                        var response = await DialogueBuilder.Instance.GenerateResponse(npc, _currentConversation, true);
+                        newDialogue = new Dialogue(response ?? "...", npc);
+                        break;
+                    case GenerationType.Gift:
+                        newDialogue = await DialogueBuilder.Instance.GenerateGift(npc, _currentGift, _currentTaste);
+                        break;
+                }
+
+                if (newDialogue != null)
+                {
+                    Game1.DrawDialogue(newDialogue);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModEntry.SMonitor?.Log($"AsyncBuilder error: {ex.Message}", StardewModdingAPI.LogLevel.Error);
+                var fallbackDialogue = new Dialogue("...", _speakingNpc);
+                Game1.DrawDialogue(fallbackDialogue);
+            }
+            finally
+            {
+                Reset();
+            }
         }
 
-        internal async Task<string> GenerateResponse(NPC instance, List<ConversationElement> conversation, bool dontSkipNext = false)
+        private void Reset()
         {
-            var character = GetCharacter(instance);
-            var theLine = await character.CreateResponse(conversation);
-            return theLine ?? "...";
+            _awaitingGeneration = false;
+            _speakingNpc = null;
+            _currentDialogueKey = "";
+            _originalLine = null;
+            _currentConversation = null;
+            _currentGift = null;
+            _currentTaste = 0;
+            _awaitedType = GenerationType.None;
         }
 
-        internal async Task<Dialogue> GenerateGift(NPC instance, StardewValley.Object gift, int taste)
+        internal void RequestNpcBasic(NPC npc, string key, string original)
         {
-            var character = GetCharacter(instance);
-            var theLine = await character.CreateGiftResponse(gift, taste);
-            return new Dialogue(theLine ?? "...", instance);
+            if (_awaitingGeneration) return;
+            _speakingNpc = npc;
+            _currentDialogueKey = key;
+            _originalLine = original;
+            _awaitedType = GenerationType.Basic;
+            _awaitingGeneration = true;
         }
 
-        internal void AddConversation(NPC npc, string dialogue, bool isPlayerLine = false) { }
-        internal void ClearContext() { }
-        internal void AddDialogueLine(NPC instance, List<StardewValley.DialogueLine> lines) { }
-        internal void AddEventLine(NPC instance, IEnumerable<NPC> actors, string festivalName, List<StardewValley.DialogueLine> lines) { }
-        internal void AddOverheardLine(NPC otherNpc, NPC instance, List<StardewValley.DialogueLine> lines) { }
-
-        internal bool PatchNpc(NPC n, int probability = 4, bool retainResult = false)
+        internal void RequestNpcResponse(NPC npc, List<ConversationElement> conversation)
         {
-            if (LlmDisabled || Config == null || !Config.EnableMod) return false;
-            if (Config.DisabledCharactersList.Contains(n.Name)) return false;
-            if (probability < 4 && _random.Next(4) >= probability) return false;
-            return true;
+            if (_awaitingGeneration) return;
+            _speakingNpc = npc;
+            _currentConversation = conversation;
+            _awaitedType = GenerationType.Conversation;
+            _awaitingGeneration = true;
         }
+
+        internal void RequestNpcGiftResponse(NPC npc, StardewValley.Object gift, int taste)
+        {
+            if (_awaitingGeneration) return;
+            _speakingNpc = npc;
+            _currentGift = gift;
+            _currentTaste = taste;
+            _awaitedType = GenerationType.Gift;
+            _awaitingGeneration = true;
+        }
+    }
+
+    internal enum GenerationType
+    {
+        None, Basic, Conversation, Gift
     }
 }
