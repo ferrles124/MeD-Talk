@@ -9,13 +9,18 @@ namespace MedTalk
     {
         public static bool Prefix(Dialogue dialogue)
         {
-            if (dialogue == null || dialogue.dialogues == null || dialogue.dialogues.Count == 0)
-                return true;
-
-            var first = dialogue.dialogues[0];
-            if (first != null && first.Text != null && first.Text.StartsWith("skip#"))
-                return false;
-
+            if (dialogue == null) return true;
+            
+            if (dialogue is MedTalkDialogue medTalkDlg)
+            {
+                if (medTalkDlg.dialogues == null || medTalkDlg.dialogues.Count == 0)
+                    return true;
+                    
+                var first = medTalkDlg.dialogues[0];
+                if (first != null && first.Text != null && first.Text.StartsWith("skip#"))
+                    return false;
+            }
+            
             return true;
         }
     }
