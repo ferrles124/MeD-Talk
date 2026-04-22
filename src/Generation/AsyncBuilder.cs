@@ -39,41 +39,37 @@ namespace MedTalk
 
         private async Task PerformGeneration()
         {
+            string dialogueText = "...";
+            
             try
             {
                 var npc = _speakingNpc;
-                MedTalkDialogue newDialogue = null;
 
                 switch (_awaitedType)
                 {
                     case GenerationType.Basic:
-                        newDialogue = await DialogueBuilder.Instance.Generate(npc, _currentDialogueKey, _originalLine);
+                        dialogueText = await DialogueBuilder.Instance.Generate(npc, _currentDialogueKey, _originalLine);
                         break;
                     case GenerationType.Conversation:
-                        var response = await DialogueBuilder.Instance.GenerateResponse(npc, _currentConversation, true);
-                        newDialogue = new MedTalkDialogue(response ?? "...", npc);
+                        dialogueText = await DialogueBuilder.Instance.GenerateResponse(npc, _currentConversation, true);
                         break;
                     case GenerationType.Gift:
-                        newDialogue = await DialogueBuilder.Instance.GenerateGift(npc, _currentGift, _currentTaste);
+                        dialogueText = await DialogueBuilder.Instance.GenerateGift(npc, _currentGift, _currentTaste);
                         break;
-                }
-
-                if (newDialogue != null)
-                {
-                    Game1.drawDialogue(newDialogue);
                 }
             }
             catch (Exception ex)
             {
                 ModEntry.SMonitor?.Log($"AsyncBuilder error: {ex.Message}", StardewModdingAPI.LogLevel.Error);
-                if (_speakingNpc != null)
-                {
-                    var fallbackDialogue = new MedTalkDialogue("...", _speakingNpc);
-                    Game1.drawDialogue(fallbackDialogue);
-                }
+                dialogueText = "...";
             }
             finally
             {
+                if (_speakingNpc != null && !string.IsNullOrEmpty(dialogueText))
+                {
+                    _speakingNpc.CurrentDialogue.Push(new Dialogue(dialogueText, _speakingNpc));
+                    Game1.drawDialogue(_speakingNpc);
+                }
                 Reset();
             }
         }
