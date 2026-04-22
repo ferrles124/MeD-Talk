@@ -18,7 +18,8 @@ namespace MedTalk
             var firstLine = topDialogue.dialogues[0];
             if (firstLine == null) return;
 
-            if (firstLine.Text == "[[generate]]")
+            // Eğer diyalog "[[generate]]" ile başlıyorsa, AI üretimini başlat
+            if (firstLine.Text == "[[generate]]" || firstLine.Text.StartsWith("[[generate]]"))
             {
                 __result.Pop();
                 AsyncBuilder.Instance.RequestNpcBasic(__instance, "default", "");
