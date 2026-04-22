@@ -6,7 +6,7 @@
     <TargetFrameworks>net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Platforms>AnyCPU;x64</Platforms>
-    <NoWarn>$(NoWarn);NU1701;MSB3245;MSB3246;CA1416</NoWarn>
+    <NoWarn>$(NoWarn);NU1701;MSB3245;MSB3246;CA1416;CS1998</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="newtonsoft.json" Version="13.0.3" />
